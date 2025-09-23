@@ -2,45 +2,59 @@ pipeline {
     agent any
 
     environment {
-        DOTNET_PATH = "C:\\Program Files\\dotnet\\dotnet.exe"  // adjust path if needed
+        DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Anmolgarg123/WebApplication2.git'
+            }
+        }
+
         stage('Build') {
             steps {
-                bat '"%DOTNET_PATH%" build WebApplication2.sln -c Release'
+                bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
             }
         }
 
         stage('Test') {
             steps {
-                bat '"%DOTNET_PATH%" test WebApplication2.Tests\\WebApplication2.Tests.csproj'
+                // Run tests and generate TRX (or JUnit XML) reports
+                bat "${DOTNET_PATH} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\""
             }
             post {
                 always {
-                    junit '**/TestResults/*.xml'  // xUnit test report
+                    // Publish test results to Jenkins
+                    junit '**/TestResults.trx'
                 }
             }
         }
 
         stage('Code Quality') {
             steps {
-                echo 'SonarQube analysis would go here'
-                // You can configure SonarQube scanner in Jenkins
+                echo 'Code Quality stage: Integrate SonarQube or other tools here'
+                // Example:
+                // bat "sonar-scanner.bat -Dsonar.projectKey=WebApplication2 -Dsonar.sources=."
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploy to staging environment or Docker container'
-                // Example: docker build & docker run commands
+                echo 'Deploy stage: Add Docker or Azure/AWS deploy commands here'
+                // Example:
+                // bat "docker build -t webapp2:latest ."
+                // bat "docker run -d -p 5000:80 webapp2:latest"
             }
         }
     }
-    
+
     post {
-        always {
-            echo 'Pipeline finished!'
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs!'
         }
     }
 }
