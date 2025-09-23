@@ -2,68 +2,65 @@ pipeline {
     agent any
 
     environment {
-        DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        BUILD_CONFIGURATION = 'Release'
+        DOTNET = '"C:\\Program Files\\dotnet\\dotnet.exe"'
+        TEST_RESULTS = 'TestResults.trx'
+        JUNIT_RESULTS = 'TestResults.xml'
     }
 
     stages {
-
-        // 1. Checkout code from GitHub
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Anmolgarg123/WebApplication2.git'
             }
         }
 
-        // 2. Build stage
         stage('Build') {
             steps {
-                bat "${DOTNET_PATH} build WebApplication2.sln -c ${BUILD_CONFIGURATION}"
+                bat "${env.DOTNET} build WebApplication2.sln -c Release"
             }
         }
 
-        // 3. Test stage
         stage('Test') {
             steps {
-                // Run tests and generate JUnit XML report
-                bat "${DOTNET_PATH} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"junit;LogFilePath=TestResults.xml\""
-            }
-            post {
-                always {
-                    // Publish JUnit test results in Jenkins
-                    junit '**/TestResults.xml'
-                }
+                // Run tests and output TRX file
+                bat "${env.DOTNET} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger trx;LogFileName=${env.TEST_RESULTS}"
+
+                // Convert TRX to JUnit XML for Jenkins
+                bat "trx2junit ${env.TEST_RESULTS}"
+
+                // Publish JUnit results
+                junit "${env.JUNIT_RESULTS}"
             }
         }
 
-        // 4. Code Quality stage (SonarQube example)
         stage('Code Quality') {
             steps {
-                // Optional: replace with your SonarQube project key and server
-                bat "${DOTNET_PATH} sonarscanner begin /k:\"WebApplication2\" /d:sonar.login=\"YOUR_SONAR_TOKEN\""
-                bat "${DOTNET_PATH} build WebApplication2.sln"
-                bat "${DOTNET_PATH} sonarscanner end /d:sonar.login=\"YOUR_SONAR_TOKEN\""
+                echo "Code Quality stage: configure SonarQube or other tools here"
             }
         }
 
-        // 5. Deploy stage (example using local IIS or Docker)
         stage('Deploy') {
             steps {
-                // Example: build Docker image and run container
-                bat 'docker build -t webapplication2:latest .'
-                bat 'docker stop webapplication2 || exit 0'
-                bat 'docker rm webapplication2 || exit 0'
-                bat 'docker run -d -p 5000:80 --name webapplication2 webapplication2:latest'
+                echo "Deploy stage: configure Docker, AWS, or Azure deployment here"
+            }
+        }
+
+        stage('Monitoring') {
+            steps {
+                echo "Monitoring stage: configure Prometheus, New Relic, or Datadog here"
             }
         }
     }
 
     post {
-        success {
-            echo 'Pipeline completed successfully!'
+        always {
+            echo "Pipeline finished"
         }
         failure {
-            echo 'Pipeline failed. Check the logs!'
+            echo "Pipeline failed. Check logs!"
+        }
+        success {
+            echo "Pipeline succeeded!"
         }
     }
 }
