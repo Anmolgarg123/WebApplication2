@@ -335,3 +335,5 @@ C:\Users\hp\source\repos\WebApplication2\WebApplication2\obj\Debug\net9.0\refint
 C:\Users\hp\source\repos\WebApplication2\WebApplication2\obj\Debug\net9.0\WebApplication2.pdb
 C:\Users\hp\source\repos\WebApplication2\WebApplication2\obj\Debug\net9.0\WebApplication2.genruntimeconfig.cache
 C:\Users\hp\source\repos\WebApplication2\WebApplication2\obj\Debug\net9.0\ref\WebApplication2.dll
+C:\Users\hp\source\repos\WebApplication2\WebApplication2\obj\Debug\net9.0\WebApplication2.sourcelink.json
+C:\Users\hp\source\repos\WebApplication2\WebApplication2\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt

@@ -421,3 +421,4 @@ C:\Users\hp\source\repos\WebApplication2\WebApplication2.Tests\obj\Debug\net9.0\
 C:\Users\hp\source\repos\WebApplication2\WebApplication2.Tests\obj\Debug\net9.0\ref\WebApplication2.Tests.dll
 C:\Users\hp\source\repos\WebApplication2\WebApplication2.Tests\bin\Debug\net9.0\Castle.Core.dll
 C:\Users\hp\source\repos\WebApplication2\WebApplication2.Tests\bin\Debug\net9.0\Moq.dll
+C:\Users\hp\source\repos\WebApplication2\WebApplication2.Tests\obj\Debug\net9.0\WebApplication2.Tests.sourcelink.json
