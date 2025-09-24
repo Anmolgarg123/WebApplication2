@@ -3,11 +3,19 @@ pipeline {
 
     environment {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'
+        NODEJS_HOME = tool name: 'NodeJS20', type: 'NodeJS'
         PATH = "${env.NODEJS_HOME}\\bin;C:\\Program Files\\dotnet;${env.PATH}"
     }
 
     stages {
+        stage('Debug PATH') {
+            steps {
+                echo "PATH = ${env.PATH}"
+                bat 'node -v'
+                bat 'npm -v'
+            }
+        }
+
         stage('Checkout SCM') {
             steps {
                 checkout scm
@@ -40,7 +48,6 @@ pipeline {
 
         stage('Code Quality') {
             steps {
-                echo 'Running code quality checks...'
                 bat "${DOTNET_PATH} tool restore --verbosity minimal"
                 bat script: "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln --check", returnStatus: true
             }
@@ -68,7 +75,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Add deployment steps here (e.g., IIS, Azure, Docker, etc.)'
+                echo 'Add deployment steps here (IIS, Docker, Azure, etc.)'
             }
         }
     }
