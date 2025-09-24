@@ -35,11 +35,18 @@ pipeline {
             }
         }
 
-        stage('Code Quality') {
-            steps {
-                echo 'Add SonarQube or CodeClimate steps here if needed'
-            }
-        }
+       stage('Code Quality') {
+    steps {
+        echo 'Running code quality checks...'
+
+        // Restore local dotnet tools first
+        bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
+
+        // Run dotnet-format in check mode (doesn't change files, just reports issues)
+        bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format --verify-no-changes'
+    }
+}
+
 
         stage('Deploy') {
             steps {
