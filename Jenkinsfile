@@ -71,6 +71,13 @@ pipeline {
     }
 }
 
+        stage('Serve Angular UI') {
+    steps {
+        dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
+            bat 'npx serve -s dist\\webapp-ui -l 4200'
+        }
+    }
+}
 
         stage('Deploy') {
             steps {
