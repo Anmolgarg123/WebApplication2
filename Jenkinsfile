@@ -3,22 +3,21 @@ pipeline {
 
     environment {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        NODEJS_HOME = tool name: 'NodeJS20', type: 'NodeJS'
-        PATH = "${env.NODEJS_HOME}\\bin;C:\\Program Files\\dotnet;${env.PATH}"
+        PATH = "C:\\Program Files\\nodejs;C:\\Users\\hp\\.dotnet\\tools;${env.PATH}"
     }
 
     stages {
-        stage('Debug PATH') {
-            steps {
-                echo "PATH = ${env.PATH}"
-                bat 'node -v'
-                bat 'npm -v'
-            }
-        }
-
         stage('Checkout SCM') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Debug NodeJS') {
+            steps {
+                echo "Debugging NodeJS environment..."
+                bat 'node -v'
+                bat 'npm -v'
             }
         }
 
@@ -48,6 +47,7 @@ pipeline {
 
         stage('Code Quality') {
             steps {
+                echo 'Running code quality checks...'
                 bat "${DOTNET_PATH} tool restore --verbosity minimal"
                 bat script: "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln --check", returnStatus: true
             }
@@ -64,18 +64,14 @@ pipeline {
 
         stage('Copy Angular UI to API') {
             steps {
-                powershell '''
-                    $src = "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui"
-                    $dest = "WebApplication2\\wwwroot"
-                    if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-                    Copy-Item -Recurse -Force $src $dest
-                '''
+                // Using robocopy instead of xcopy
+                bat 'robocopy "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui" "WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /nc /ns /np'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Add deployment steps here (IIS, Docker, Azure, etc.)'
+                echo 'Add deployment steps here (e.g., IIS, Azure, Docker, etc.)'
             }
         }
     }
