@@ -1,66 +1,59 @@
 pipeline {
     agent any
 
-    environment {
-        DOTNET = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        TEST_RESULTS = 'TestResults.trx'
-        JUNIT_RESULTS = 'TestResults.xml'
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Anmolgarg123/WebApplication2.git'
+                git url: 'https://github.com/Anmolgarg123/WebApplication2.git', branch: 'main'
             }
         }
 
         stage('Build') {
             steps {
-                bat "${env.DOTNET} build WebApplication2.sln -c Release"
+                bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
             }
         }
 
         stage('Test') {
             steps {
-                // Run tests and output TRX file
-                bat "${env.DOTNET} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger trx;LogFileName=${env.TEST_RESULTS}"
+                // Run tests and generate trx file
+                bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx"'
+            }
+        }
 
-                // Convert TRX to JUnit XML for Jenkins
-                bat "trx2junit ${env.TEST_RESULTS}"
+        stage('Convert TRX to JUnit') {
+            steps {
+                // Convert trx -> JUnit XML
+                bat '"C:\\Users\\hp\\.dotnet\\tools\\trx2junit.exe" WebApplication2.Tests\\TestResults\\TestResults.trx'
+            }
+        }
 
-                // Publish JUnit results
-                junit "${env.JUNIT_RESULTS}"
+        stage('Publish Test Results') {
+            steps {
+                // Publish JUnit XML to Jenkins
+                junit 'WebApplication2.Tests\\TestResults\\TestResults.xml'
             }
         }
 
         stage('Code Quality') {
             steps {
-                echo "Code Quality stage: configure SonarQube or other tools here"
+                echo 'Add SonarQube or CodeClimate steps here if needed'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo "Deploy stage: configure Docker, AWS, or Azure deployment here"
-            }
-        }
-
-        stage('Monitoring') {
-            steps {
-                echo "Monitoring stage: configure Prometheus, New Relic, or Datadog here"
+                echo 'Add deployment steps here'
             }
         }
     }
 
     post {
         always {
-            echo "Pipeline finished"
+            echo 'Pipeline finished!'
         }
         failure {
-            echo "Pipeline failed. Check logs!"
-        }
-        success {
-            echo "Pipeline succeeded!"
+            echo 'Pipeline failed! Check logs.'
         }
     }
 }
