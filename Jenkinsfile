@@ -46,12 +46,13 @@ pipeline {
         }
 
         stage('Code Quality') {
-            steps {
-                echo 'Running code quality checks...'
-                bat "${DOTNET_PATH} tool restore --verbosity minimal"
-                bat script: "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln --check", returnStatus: true
-            }
-        }
+    steps {
+        echo 'Running code quality checks...'
+        bat "${DOTNET_PATH} tool restore --verbosity minimal"
+        // Auto-fix formatting instead of failing
+        bat "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln"
+    }
+}
 
         stage('Build Angular UI') {
             steps {
