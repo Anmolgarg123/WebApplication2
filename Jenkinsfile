@@ -1,6 +1,13 @@
 pipeline {
     agent any
 
+    environment {
+        DOTNET = '"C:\\Program Files\\dotnet\\dotnet.exe"'
+        TRX2JUNIT = '"C:\\Users\\hp\\.dotnet\\tools\\trx2junit.exe"'
+        ANGULAR_PROJECT = 'C:\\Users\\hp\\source\\repos\\webapp-ui'
+        ANGULAR_APP_NAME = 'webapp-ui' // Usually same as project folder name in dist/
+    }
+
     stages {
         stage('Checkout SCM') {
             steps {
@@ -8,22 +15,21 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build .NET API') {
             steps {
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
+                bat "${DOTNET} build WebApplication2.sln -c Release"
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
-                // Run tests with TRX logger
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
+                bat "${DOTNET} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\" -l \"console;verbosity=detailed\""
             }
         }
 
         stage('Convert TRX to JUnit') {
             steps {
-                bat '"C:\\Users\\hp\\.dotnet\\tools\\trx2junit.exe" WebApplication2.Tests\\TestResults\\TestResults.trx'
+                bat "${TRX2JUNIT} WebApplication2.Tests\\TestResults\\TestResults.trx"
             }
         }
 
@@ -36,19 +42,28 @@ pipeline {
         stage('Code Quality') {
             steps {
                 echo 'Running code quality checks...'
+                bat "${DOTNET} tool restore --verbosity minimal"
+                bat script: "${DOTNET} tool run dotnet-format WebApplication2.sln --verify-no-changes", returnStatus: true
+            }
+        }
 
-                // Restore repo-local dotnet tools
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
+        stage('Build Angular UI') {
+            steps {
+                bat "cd ${ANGULAR_PROJECT} && npm install"
+                bat "cd ${ANGULAR_PROJECT} && ng build --prod"
+            }
+        }
 
-                // Run dotnet-format on the solution in check mode
-                // If you want pipeline to fail on formatting errors, remove "returnStatus: true"
-                bat script: '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln --verify-no-changes', returnStatus: true
+        stage('Copy Angular to API') {
+            steps {
+                // Copies Angular dist files to API's wwwroot folder
+                bat "xcopy /E /Y /I ${ANGULAR_PROJECT}\\dist\\${ANGULAR_APP_NAME} WebApplication2\\wwwroot"
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Add deployment steps here'
+                echo 'Add deployment steps here (e.g., publish API or copy to server)'
             }
         }
     }
@@ -56,6 +71,12 @@ pipeline {
     post {
         always {
             echo 'Pipeline finished!'
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check the logs for errors.'
         }
     }
 }
