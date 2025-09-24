@@ -63,12 +63,14 @@ pipeline {
             }
         }
 
-        stage('Copy Angular UI to API') {
-            steps {
-                // Using robocopy instead of xcopy
-                bat 'robocopy "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui" "WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /nc /ns /np'
-            }
-        }
+       stage('Copy Angular UI to API') {
+    steps {
+        bat '''
+        robocopy "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui" "WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /nc /ns /np || exit 0
+        '''
+    }
+}
+
 
         stage('Deploy') {
             steps {
