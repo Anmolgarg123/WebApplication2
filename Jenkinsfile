@@ -2,9 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'  // Name from Jenkins NodeJS config
-        PATH = "${env.NODEJS_HOME}\\bin;${env.DOTNET_PATH};${env.PATH}"
+        DOTNET_HOME = 'C:\\Program Files\\dotnet'
+        PATH = "${env.DOTNET_HOME};${env.PATH}"
     }
 
     stages {
@@ -16,13 +15,13 @@ pipeline {
 
         stage('Build .NET API') {
             steps {
-                bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
+                bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat "${DOTNET_PATH} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\" -l \"console;verbosity=detailed\""
+                bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
             }
         }
 
@@ -41,27 +40,27 @@ pipeline {
         stage('Code Quality') {
             steps {
                 echo 'Running code quality checks...'
-                bat "${DOTNET_PATH} tool restore --verbosity minimal"
-                bat script: "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln --check", returnStatus: true
+                bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
+                bat script: '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln --check', returnStatus: true
             }
         }
 
         stage('Build Angular UI') {
-    steps {
-        script {
-            NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'
-            withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
-                bat 'cd C:\\Users\\hp\\source\\repos\\webapp-ui && npm install'
-                bat 'cd C:\\Users\\hp\\source\\repos\\webapp-ui && npm run build'
+            steps {
+                script {
+                    def NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'
+                    withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
+                        dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
+                            bat 'npm install'
+                            bat 'npm run build'
+                        }
+                    }
+                }
             }
         }
-    }
-}
-
 
         stage('Copy Angular UI to API') {
             steps {
-                // Adjust this path if your API serves static files from a specific folder
                 bat 'xcopy /E /Y "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui" "WebApplication2\\wwwroot"'
             }
         }
