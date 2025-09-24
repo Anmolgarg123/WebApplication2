@@ -47,13 +47,17 @@ pipeline {
         }
 
         stage('Build Angular UI') {
-            steps {
-                dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
-                    bat 'npm install'
-                    bat 'npm run build'
-                }
+    steps {
+        script {
+            NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'
+            withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
+                bat 'cd C:\\Users\\hp\\source\\repos\\webapp-ui && npm install'
+                bat 'cd C:\\Users\\hp\\source\\repos\\webapp-ui && npm run build'
             }
         }
+    }
+}
+
 
         stage('Copy Angular UI to API') {
             steps {
