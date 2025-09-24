@@ -14,12 +14,12 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                // Run tests with TRX logger
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx"'
-            }
-        }
+       stage('Test') {
+    steps {
+        bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
+    }
+}
+
 
         stage('Convert TRX to JUnit') {
             steps {
