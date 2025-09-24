@@ -1,34 +1,55 @@
-public class ProductsControllerTests
+using WebApplication2.Controllers;
+using WebApplication2.Models;
+using Microsoft.AspNetCore.Mvc;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace WebApplication2.Tests
 {
-    private readonly ITestOutputHelper _output;
-
-    public ProductsControllerTests(ITestOutputHelper output)
+    public class ProductsControllerTests
     {
-        _output = output;
-    }
+        private readonly ITestOutputHelper _output;
 
-    [Fact]
-    public void CreateProduct_ReturnsCreatedAtAction()
-    {
-        var controller = new ProductsController();
-        var product = new Product { Id = 1, Name = "Test Product", Price = 99.99m };
-
-        _output.WriteLine($"[TEST] Input Product: Id={product.Id}, Name={product.Name}, Price={product.Price}");
-
-        var actionResult = controller.Create(product);
-        var createdResult = actionResult.Result as CreatedAtActionResult;
-
-        if (createdResult?.Value is Product createdProduct)
+        public ProductsControllerTests(ITestOutputHelper output)
         {
-            _output.WriteLine($"[TEST] Created Product: Id={createdProduct.Id}, Name={createdProduct.Name}, Price={createdProduct.Price}");
-        }
-        else
-        {
-            _output.WriteLine("[TEST] Created result value is null or not a Product");
+            _output = output;
         }
 
-        Assert.Equal(201, createdResult!.StatusCode);
-        Assert.Equal(product, createdResult.Value);
-        Assert.Equal("GetById", createdResult.ActionName);
+        [Fact]
+        public void CreateProduct_ShouldReturn_CreatedAtActionResult_WithExpectedProduct()
+        {
+            // Arrange
+            var controller = new ProductsController();
+            var inputProduct = new Product
+            {
+                Id = 1,
+                Name = "Test Product",
+                Price = 99.99m
+            };
+
+            _output.WriteLine($"[Arrange] Input Product => Id={inputProduct.Id}, Name={inputProduct.Name}, Price={inputProduct.Price}");
+
+            // Act
+            var actionResult = controller.Create(inputProduct);
+
+            // Assert - Result type
+            Assert.NotNull(actionResult);
+            Assert.NotNull(actionResult.Result);
+
+            var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+
+            // Assert - Created result details
+            Assert.Equal(201, createdResult.StatusCode);
+            Assert.Equal("GetById", createdResult.ActionName);
+
+            var returnedProduct = Assert.IsType<Product>(createdResult.Value);
+
+            _output.WriteLine($"[Assert] Returned Product => Id={returnedProduct.Id}, Name={returnedProduct.Name}, Price={returnedProduct.Price}");
+
+            // Assert - Product equality
+            Assert.Equal(inputProduct.Id, returnedProduct.Id);
+            Assert.Equal(inputProduct.Name, returnedProduct.Name);
+            Assert.Equal(inputProduct.Price, returnedProduct.Price);
+        }
     }
 }
