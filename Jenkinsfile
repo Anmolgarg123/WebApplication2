@@ -3,23 +3,14 @@ pipeline {
 
     environment {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        NODEJS_HOME = tool 'NodeJS 20'  // Matches Jenkins Tools config
+        NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'
+        PATH = "${env.NODEJS_HOME}\\bin;C:\\Program Files\\dotnet;${env.PATH}"
     }
 
     stages {
         stage('Checkout SCM') {
             steps {
                 checkout scm
-            }
-        }
-
-        stage('Debug NodeJS') {
-            steps {
-                echo "NODEJS_HOME = ${NODEJS_HOME}"
-                withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
-                    bat 'node -v'
-                    bat 'npm -v'
-                }
             }
         }
 
@@ -57,18 +48,21 @@ pipeline {
 
         stage('Build Angular UI') {
             steps {
-                withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
-                    dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
-                        bat 'npm install'
-                        bat 'npm run build'
-                    }
+                dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
+                    bat 'npm install'
+                    bat 'npm run build'
                 }
             }
         }
 
         stage('Copy Angular UI to API') {
             steps {
-                bat 'xcopy /E /Y "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui" "WebApplication2\\wwwroot"'
+                powershell '''
+                    $src = "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui"
+                    $dest = "WebApplication2\\wwwroot"
+                    if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+                    Copy-Item -Recurse -Force $src $dest
+                '''
             }
         }
 
