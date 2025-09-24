@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
-        PATH1 = 'C:\\Program Files\\nodejs'
+        // Node.js path variable
+        path1 = "C:\\Program Files\\nodejs"
+        PATH = "${path1};${env.PATH}"
     }
 
     stages {
@@ -46,16 +48,17 @@ pipeline {
 
         stage('Build Angular UI') {
             steps {
-                echo 'Building Angular UI...'
-                bat "cd C:\\Users\\hp\\source\\repos\\webapp-ui && %PATH1%\\npm install"
-                bat "cd C:\\Users\\hp\\source\\repos\\webapp-ui && %PATH1%\\npm run build"
+                dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
+                    bat 'npm install'
+                    bat 'npm run build -- --prod'
+                }
             }
         }
 
         stage('Copy Angular to API') {
             steps {
-                echo 'Copying Angular dist to API wwwroot...'
-                bat 'xcopy /E /Y "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui\\*" "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\High Distinction Task\\WebApplication2\\wwwroot\\"'
+                echo 'Copying Angular build to API wwwroot...'
+                bat 'xcopy /E /Y /I "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui\\*" "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\High Distinction Task\\WebApplication2\\wwwroot\\"'
             }
         }
 
