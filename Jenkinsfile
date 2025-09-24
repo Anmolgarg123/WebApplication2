@@ -35,17 +35,18 @@ pipeline {
             }
         }
 
-       stage('Code Quality') {
-    steps {
-        echo 'Running code quality checks...'
+      stage('Code Quality') {
+        steps {
+            echo 'Running code quality checks...'
 
-        // Restore local dotnet tools first
-        bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
+            // Restore repo-local dotnet tools
+            bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
 
-        // Run dotnet-format in check mode (doesn't change files, just reports issues)
-        bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format --verify-no-changes'
+            // Run dotnet-format on the solution in check mode
+            bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln --verify-no-changes'
+        }
     }
-}
+
 
 
         stage('Deploy') {
