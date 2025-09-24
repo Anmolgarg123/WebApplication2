@@ -3,13 +3,23 @@ pipeline {
 
     environment {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'  // Must match Jenkins NodeJS name
+        NODEJS_HOME = tool 'NodeJS 20'  // Matches Jenkins Tools config
     }
 
     stages {
         stage('Checkout SCM') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Debug NodeJS') {
+            steps {
+                echo "NODEJS_HOME = ${NODEJS_HOME}"
+                withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
+                    bat 'node -v'
+                    bat 'npm -v'
+                }
             }
         }
 
@@ -47,7 +57,6 @@ pipeline {
 
         stage('Build Angular UI') {
             steps {
-                // Add NodeJS to PATH using withEnv
                 withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
                     dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
                         bat 'npm install'
@@ -65,7 +74,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Add deployment steps here (IIS, Azure, Docker, etc.)'
+                echo 'Add deployment steps here (e.g., IIS, Azure, Docker, etc.)'
             }
         }
     }
