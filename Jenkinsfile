@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        // Node.js path variable
-        path1 = "C:\\Program Files\\nodejs"
-        PATH = "${path1};${env.PATH}"
+        DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
+        NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'  // Name from Jenkins NodeJS config
+        PATH = "${env.NODEJS_HOME}\\bin;${env.DOTNET_PATH};${env.PATH}"
     }
 
     stages {
@@ -16,13 +16,13 @@ pipeline {
 
         stage('Build .NET API') {
             steps {
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
+                bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
+                bat "${DOTNET_PATH} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\" -l \"console;verbosity=detailed\""
             }
         }
 
@@ -41,8 +41,8 @@ pipeline {
         stage('Code Quality') {
             steps {
                 echo 'Running code quality checks...'
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
-                bat script: '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln --check', returnStatus: true
+                bat "${DOTNET_PATH} tool restore --verbosity minimal"
+                bat script: "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln --check", returnStatus: true
             }
         }
 
@@ -50,21 +50,21 @@ pipeline {
             steps {
                 dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
                     bat 'npm install'
-                    bat 'npm run build -- --prod'
+                    bat 'npm run build'
                 }
             }
         }
 
-        stage('Copy Angular to API') {
+        stage('Copy Angular UI to API') {
             steps {
-                echo 'Copying Angular build to API wwwroot...'
-                bat 'xcopy /E /Y /I "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui\\*" "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\High Distinction Task\\WebApplication2\\wwwroot\\"'
+                // Adjust this path if your API serves static files from a specific folder
+                bat 'xcopy /E /Y "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui" "WebApplication2\\wwwroot"'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Add deployment steps here'
+                echo 'Add deployment steps here (e.g., IIS, Azure, Docker, etc.)'
             }
         }
     }
@@ -72,6 +72,12 @@ pipeline {
     post {
         always {
             echo 'Pipeline finished!'
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs for errors.'
         }
     }
 }
