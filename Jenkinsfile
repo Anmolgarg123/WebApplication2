@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
-                git url: 'https://github.com/Anmolgarg123/WebApplication2.git', branch: 'main'
+                checkout scm
             }
         }
 
@@ -16,21 +16,21 @@ pipeline {
 
         stage('Test') {
             steps {
-                // Run tests and generate trx file
+                // Run tests with TRX logger
                 bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx"'
             }
         }
 
         stage('Convert TRX to JUnit') {
             steps {
-                // Convert trx -> JUnit XML
+                // Convert TRX to JUnit XML
                 bat '"C:\\Users\\hp\\.dotnet\\tools\\trx2junit.exe" WebApplication2.Tests\\TestResults\\TestResults.trx'
             }
         }
 
         stage('Publish Test Results') {
             steps {
-                // Publish JUnit XML to Jenkins
+                // Publish the JUnit XML to Jenkins
                 junit 'WebApplication2.Tests\\TestResults\\TestResults.xml'
             }
         }
@@ -51,9 +51,6 @@ pipeline {
     post {
         always {
             echo 'Pipeline finished!'
-        }
-        failure {
-            echo 'Pipeline failed! Check logs.'
         }
     }
 }
