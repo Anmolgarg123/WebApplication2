@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOTNET_HOME = 'C:\\Program Files\\dotnet'
-        PATH = "${env.DOTNET_HOME};${env.PATH}"
+        DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
+        NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'  // Must match Jenkins NodeJS name
     }
 
     stages {
@@ -15,13 +15,13 @@ pipeline {
 
         stage('Build .NET API') {
             steps {
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
+                bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
+                bat "${DOTNET_PATH} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\" -l \"console;verbosity=detailed\""
             }
         }
 
@@ -40,20 +40,18 @@ pipeline {
         stage('Code Quality') {
             steps {
                 echo 'Running code quality checks...'
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
-                bat script: '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln --check', returnStatus: true
+                bat "${DOTNET_PATH} tool restore --verbosity minimal"
+                bat script: "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln --check", returnStatus: true
             }
         }
 
         stage('Build Angular UI') {
             steps {
-                script {
-                    def NODEJS_HOME = tool name: 'NodeJS 20', type: 'NodeJS'
-                    withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
-                        dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
-                            bat 'npm install'
-                            bat 'npm run build'
-                        }
+                // Add NodeJS to PATH using withEnv
+                withEnv(["PATH+NODE=${NODEJS_HOME}\\bin"]) {
+                    dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
+                        bat 'npm install'
+                        bat 'npm run build'
                     }
                 }
             }
@@ -67,7 +65,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Add deployment steps here (e.g., IIS, Azure, Docker, etc.)'
+                echo 'Add deployment steps here (IIS, Azure, Docker, etc.)'
             }
         }
     }
