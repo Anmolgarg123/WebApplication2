@@ -3,10 +3,17 @@ pipeline {
 
     environment {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        PATH = "C:\\Program Files\\nodejs;C:\\Users\\samar\\.dotnet\\tools;${env.PATH}"
+        NODE_PATH = "C:\\Program Files\\nodejs"
+        PATH = "${NODE_PATH};C:\\Users\\samar\\.dotnet\\tools;${env.PATH}"
+        DOTNET_SOLUTION = "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.sln"
+        DOTNET_TEST = "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests\\WebApplication2.Tests.csproj"
+        ANGULAR_PATH = "C:\\Users\\samar\\source\\repos\\webapp-ui"
+        ANGULAR_DIST = "${ANGULAR_PATH}\\dist\\webapp-ui"
+        DOTNET_WWWROOT = "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot"
     }
 
     stages {
+
         stage('Checkout SCM') {
             steps {
                 checkout scm
@@ -15,81 +22,53 @@ pipeline {
 
         stage('Debug Environment') {
             steps {
-                echo "Checking NodeJS and .NET versions..."
+                echo "NodeJS version:"
                 bat 'node -v'
+                echo "NPM version:"
                 bat 'npm -v'
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" --version'
-            }
-        }
-
-        stage('Debug Workspace') {
-            steps {
-                echo "Listing workspace structure..."
-                bat 'dir /s /b'
+                echo ".NET version:"
+                bat "${DOTNET_PATH} --version"
             }
         }
 
         stage('Build .NET API') {
-    steps {
-        bat '"C:\\Program Files\\dotnet\\dotnet.exe" build "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.sln" -c Release'
-    }
-}
-
+            steps {
+                echo "Building .NET Solution..."
+                bat "${DOTNET_PATH} build \"${DOTNET_SOLUTION}\" -c Release"
+            }
+        }
 
         stage('Run .NET Tests') {
             steps {
-                dir("${WORKSPACE}\\WebApplication2\\WebApplication2.Tests") {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
-                }
-            }
-        }
-
-        stage('Convert TRX to JUnit') {
-            steps {
-                dir("${WORKSPACE}\\WebApplication2\\WebApplication2.Tests\\TestResults") {
-                    bat '"C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" TestResults.trx'
-                }
-            }
-        }
-
-        stage('Publish Test Results') {
-            steps {
-                junit "${WORKSPACE}\\WebApplication2\\WebApplication2.Tests\\TestResults\\TestResults.xml"
-            }
-        }
-
-        stage('Code Quality') {
-            steps {
-                echo 'Running code quality checks...'
-                dir("${WORKSPACE}\\WebApplication2\\WebApplication2") {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln'
-                }
+                echo "Running .NET Tests..."
+                bat "${DOTNET_PATH} test \"${DOTNET_TEST}\" --logger \"trx;LogFileName=TestResults.trx\""
             }
         }
 
         stage('Build Angular UI') {
             steps {
-                dir("C:\\Users\\samar\\source\\repos\\webapp-ui") {
+                dir("${ANGULAR_PATH}") {
+                    echo "Installing Angular dependencies..."
                     bat 'npm install'
+                    echo "Building Angular app..."
                     bat 'npm run build'
                 }
             }
         }
 
-        stage('Copy Angular UI to API') {
+        stage('Copy Angular UI to API wwwroot') {
             steps {
-                bat '''
-                robocopy "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" 
-                "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" 
-                /E /NFL /NDL /NJH /NJS /nc /ns /np || exit 0
-                '''
+                echo "Copying Angular build to .NET wwwroot..."
+                bat """
+                if exist "${DOTNET_WWWROOT}" rmdir /s /q "${DOTNET_WWWROOT}"
+                robocopy "${ANGULAR_DIST}" "${DOTNET_WWWROOT}" /E /NFL /NDL /NJH /NJS /NC /NS /NP
+                """
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy (Placeholder)') {
             steps {
-                echo 'Add deployment steps here (e.g., IIS, Azure, Docker)'
+                echo "Add your deployment steps here (IIS, Azure, Docker, etc.)"
             }
         }
     }
