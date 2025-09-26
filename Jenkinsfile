@@ -3,85 +3,84 @@ pipeline {
 
     environment {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        NODE_PATH = "C:\\Program Files\\nodejs"
-        PATH = "${NODE_PATH};C:\\Users\\hp\\.dotnet\\tools;${env.PATH}"
+        PATH = "C:\\Program Files\\nodejs;C:\\Users\\hp\\.dotnet\\tools;${env.PATH}"
     }
 
     stages {
         stage('Checkout SCM') {
             steps {
-                echo "Checking out source code..."
                 checkout scm
             }
         }
 
         stage('Debug Environment') {
             steps {
-                echo "Node.js and .NET versions:"
+                echo "Debugging NodeJS and .NET environment..."
                 bat 'node -v'
                 bat 'npm -v'
-                bat "${DOTNET_PATH} --version"
+                bat '"C:\\Program Files\\dotnet\\dotnet.exe" --version'
             }
         }
 
         stage('Build .NET API') {
             steps {
-                echo "Building .NET API..."
-                bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
+                dir("${WORKSPACE}\\WebApplication2") {
+                    bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
+                }
             }
         }
 
-        stage('Run API Tests') {
+        stage('Run .NET Tests') {
             steps {
-                echo "Running API tests..."
-                bat "${DOTNET_PATH} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\" -l \"console;verbosity=detailed\""
+                dir("${WORKSPACE}\\WebApplication2") {
+                    bat "${DOTNET_PATH} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\" -l \"console;verbosity=detailed\""
+                }
             }
         }
 
-        stage('Convert Test Results') {
+        stage('Convert TRX to JUnit') {
             steps {
-                echo "Converting TRX to JUnit..."
-                bat '"C:\\Users\\hp\\.dotnet\\tools\\trx2junit.exe" WebApplication2.Tests\\TestResults\\TestResults.trx'
+                dir("${WORKSPACE}\\WebApplication2") {
+                    bat '"C:\\Users\\hp\\.dotnet\\tools\\trx2junit.exe" WebApplication2.Tests\\TestResults\\TestResults.trx'
+                }
             }
         }
 
         stage('Publish Test Results') {
             steps {
-                echo "Publishing test results..."
-                junit 'WebApplication2.Tests\\TestResults\\TestResults.xml'
+                junit "${WORKSPACE}\\WebApplication2\\WebApplication2.Tests\\TestResults\\TestResults.xml"
             }
         }
 
         stage('Code Quality') {
             steps {
-                echo "Running code quality checks..."
-                bat "${DOTNET_PATH} tool restore --verbosity minimal"
-                bat "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln"
+                dir("${WORKSPACE}\\WebApplication2") {
+                    bat "${DOTNET_PATH} tool restore --verbosity minimal"
+                    bat "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln"
+                }
             }
         }
 
         stage('Build Angular UI') {
             steps {
-                echo "Building Angular UI..."
-                dir('C:\\Users\\hp\\source\\repos\\webapp-ui') {
+                dir("${WORKSPACE}\\webapp-ui") {
                     bat 'npm install'
-                    bat 'npm run build'
+                    bat 'npm run build --prod'
                 }
             }
         }
 
-        stage('Copy Angular UI to API wwwroot') {
+        stage('Copy Angular UI to API') {
             steps {
-                echo "Copying Angular build to API wwwroot..."
-                bat '''
-                robocopy "C:\\Users\\hp\\source\\repos\\webapp-ui\\dist\\webapp-ui" "WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /nc /ns /np || exit 0
-                '''
+                bat """
+                robocopy "${WORKSPACE}\\webapp-ui\\dist\\webapp-ui" "${WORKSPACE}\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /nc /ns /np || exit 0
+                """
             }
         }
 
-        stage('Deploy (Manual/Placeholder)') {
+        stage('Deploy') {
             steps {
-                echo "Deploy step: Add your deployment here (IIS, Docker, Azure, etc.)"
+                echo 'Add deployment steps here (IIS, Docker, or Azure)'
             }
         }
     }
@@ -94,7 +93,7 @@ pipeline {
             echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Check logs!'
+            echo 'Pipeline failed. Check logs for errors.'
         }
     }
 }
