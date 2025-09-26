@@ -30,12 +30,11 @@ pipeline {
         }
 
         stage('Build .NET API') {
-            steps {
-                dir("${WORKSPACE}\\WebApplication2\\WebApplication2") {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
-                }
-            }
-        }
+    steps {
+        bat '"C:\\Program Files\\dotnet\\dotnet.exe" build "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.sln" -c Release'
+    }
+}
+
 
         stage('Run .NET Tests') {
             steps {
