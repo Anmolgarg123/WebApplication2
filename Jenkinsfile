@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        PATH = "C:\\Program Files\\nodejs;C:\\Users\\hp\\.dotnet\\tools;${env.PATH}"
+        PATH = "C:\\Program Files\\nodejs;C:\\Users\\samar\\.dotnet\\tools;${env.PATH}"
     }
 
     stages {
@@ -15,33 +15,40 @@ pipeline {
 
         stage('Debug Environment') {
             steps {
-                echo "Debugging NodeJS and .NET environment..."
+                echo "Checking NodeJS and .NET versions..."
                 bat 'node -v'
                 bat 'npm -v'
                 bat '"C:\\Program Files\\dotnet\\dotnet.exe" --version'
             }
         }
 
+        stage('Debug Workspace') {
+            steps {
+                echo "Listing workspace structure..."
+                bat 'dir /s /b'
+            }
+        }
+
         stage('Build .NET API') {
             steps {
-                dir("${WORKSPACE}\\WebApplication2") {
-                    bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
+                dir("${WORKSPACE}\\WebApplication2\\WebApplication2") {
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
                 }
             }
         }
 
         stage('Run .NET Tests') {
             steps {
-                dir("${WORKSPACE}\\WebApplication2") {
-                    bat "${DOTNET_PATH} test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\" -l \"console;verbosity=detailed\""
+                dir("${WORKSPACE}\\WebApplication2\\WebApplication2.Tests") {
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
                 }
             }
         }
 
         stage('Convert TRX to JUnit') {
             steps {
-                dir("${WORKSPACE}\\WebApplication2") {
-                    bat '"C:\\Users\\hp\\.dotnet\\tools\\trx2junit.exe" WebApplication2.Tests\\TestResults\\TestResults.trx'
+                dir("${WORKSPACE}\\WebApplication2\\WebApplication2.Tests\\TestResults") {
+                    bat '"C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" TestResults.trx'
                 }
             }
         }
@@ -54,33 +61,36 @@ pipeline {
 
         stage('Code Quality') {
             steps {
-                dir("${WORKSPACE}\\WebApplication2") {
-                    bat "${DOTNET_PATH} tool restore --verbosity minimal"
-                    bat "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln"
+                echo 'Running code quality checks...'
+                dir("${WORKSPACE}\\WebApplication2\\WebApplication2") {
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln'
                 }
             }
         }
 
         stage('Build Angular UI') {
             steps {
-                dir("${WORKSPACE}\\webapp-ui") {
+                dir("C:\\Users\\samar\\source\\repos\\webapp-ui") {
                     bat 'npm install'
-                    bat 'npm run build --prod'
+                    bat 'npm run build'
                 }
             }
         }
 
         stage('Copy Angular UI to API') {
             steps {
-                bat """
-                robocopy "${WORKSPACE}\\webapp-ui\\dist\\webapp-ui" "${WORKSPACE}\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /nc /ns /np || exit 0
-                """
+                bat '''
+                robocopy "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" 
+                "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" 
+                /E /NFL /NDL /NJH /NJS /nc /ns /np || exit 0
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Add deployment steps here (IIS, Docker, or Azure)'
+                echo 'Add deployment steps here (e.g., IIS, Azure, Docker)'
             }
         }
     }
