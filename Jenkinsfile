@@ -38,18 +38,25 @@ pipeline {
             }
         }
 
-        stage('Convert TRX to JUnit') {
+       stage('Convert TRX to JUnit') {
     steps {
         dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-            // Copy any .trx files to a flat folder
-            bat 'mkdir TRX_Flat || exit 0'
-            bat 'copy TestResults\\**\\*.trx TRX_Flat\\'
+            // Create a flat folder for all TRX files
+            bat 'if not exist TRX_Flat mkdir TRX_Flat'
 
-            // Convert each .trx to JUnit
-            bat 'for %f in (TRX_Flat\\*.trx) do "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%f"'
+            // Copy all TRX files recursively into TRX_Flat
+            bat 'robocopy TestResults TRX_Flat *.trx /S /NFL /NDL /NJH /NJS /NC /NS /NP'
+
+            // Convert each TRX file to JUnit XML
+            bat '''
+            for %%f in (TRX_Flat\\*.trx) do (
+                "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%%f"
+            )
+            '''
         }
     }
 }
+
 
 
         stage('Publish Test Results') {
