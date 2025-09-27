@@ -105,7 +105,7 @@ pipeline {
     }
 }
 
-        stage('Security Scan') {
+       stage('Security Scan') {
             steps {
                 dir(BACKEND_PATH) {
                     echo "Running security scan for vulnerable dependencies..."
