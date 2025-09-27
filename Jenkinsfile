@@ -5,7 +5,7 @@ pipeline {
         DOTNET_PATH = 'C:\\Program Files\\dotnet\\dotnet.exe'
         WEBAPP_UI_PATH = 'C:\\Users\\samar\\source\\repos\\webapp-ui'
         BACKEND_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2'
-        SOLUTION_FILE = "${BACKEND_PATH}\\WebApplication2.sln"
+        SOLUTION_FILE = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.sln'
         WWWROOT_PATH = "${BACKEND_PATH}\\wwwroot"
     }
 
@@ -19,13 +19,11 @@ pipeline {
 
         stage('Restore & Build Backend') {
             steps {
-                dir(BACKEND_PATH) {
-                    echo "Restoring .NET packages..."
-                    bat "\"${DOTNET_PATH}\" restore \"${SOLUTION_FILE}\""
+                echo "Restoring .NET packages..."
+                bat "\"${DOTNET_PATH}\" restore \"${SOLUTION_FILE}\""
 
-                    echo "Building backend..."
-                    bat "\"${DOTNET_PATH}\" build \"${SOLUTION_FILE}\" --no-restore"
-                }
+                echo "Building backend..."
+                bat "\"${DOTNET_PATH}\" build \"${SOLUTION_FILE}\" --no-restore"
             }
         }
 
@@ -52,12 +50,15 @@ pipeline {
 
         stage('Deploy Frontend') {
             steps {
-                echo "Deploying Angular build to wwwroot..."
+                echo "Copying Angular build to wwwroot..."
                 // Ensure wwwroot exists
-                bat "if not exist \"${WWWROOT_PATH}\" mkdir \"${WWWROOT_PATH}\""
+                bat "mkdir \"${WWWROOT_PATH}\" || echo 'wwwroot exists'"
 
-                // Copy Angular build to wwwroot, retry on locks
-                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP /R:2 /W:2"
+                // Clean old files
+                bat "rmdir /s /q \"${WWWROOT_PATH}\""
+
+                // Copy new frontend build
+                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP"
             }
         }
 
@@ -68,8 +69,8 @@ pipeline {
                     bat "taskkill /IM WebApplication2.exe /F || echo 'No running instance'"
 
                     echo "Starting backend..."
-                    // Starts backend in background without blocking pipeline
-                    bat "start \"Backend\" \"${DOTNET_PATH}\" run --project \"${SOLUTION_FILE}\""
+                    // Starts backend in background
+                    bat "start \"Backend\" \"${DOTNET_PATH}\" run"
                 }
             }
         }
@@ -77,7 +78,6 @@ pipeline {
         stage('Code Quality - SonarQube') {
             steps {
                 echo "Running SonarQube scan..."
-                // Example, configure your SonarQube server in Jenkins first
                 bat "sonar-scanner"
             }
         }
