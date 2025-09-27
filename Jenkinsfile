@@ -51,8 +51,8 @@ pipeline {
                     // Convert all TRX files to JUnit XML using absolute paths
                     bat '''
                     for %%f in (TRX_Flat\\*.trx) do (
-                        echo Converting "%%~dp0%%f"
-                        "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%%~dp0%%f"
+                        echo Converting "%%cd%%\\%%f"
+                        "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%%cd%%\\%%f"
                     )
                     '''
                 }
