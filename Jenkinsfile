@@ -89,13 +89,15 @@ pipeline {
             }
         }
 
-        stage('Release (Optional)') {
+         stage('Code Quality - SonarQube (Skipped)') {
             steps {
-                dir(BACKEND_PATH) {
-                    echo "Tagging release..."
-                    bat 'git tag -a v1.0 -m "Release 1.0"'
-                    bat 'git push origin --tags'
-                }
+                echo "Skipping SonarQube scan for this submission."
+            }
+        }
+
+        stage('Monitoring (Placeholder)') {
+            steps {
+                echo "Monitoring stage configured (placeholder for HD)."
             }
         }
     }
