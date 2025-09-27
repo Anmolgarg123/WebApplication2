@@ -48,11 +48,11 @@ pipeline {
                     // Copy all TRX files recursively into TRX_Flat
                     bat 'robocopy "TestResults" "TRX_Flat" *.trx /S /NFL /NDL /NJH /NJS /NC /NS /NP || exit 0'
 
-                    // Convert all TRX files to JUnit XML
+                    // Convert all TRX files to JUnit XML using absolute paths
                     bat '''
                     for %%f in (TRX_Flat\\*.trx) do (
-                        echo Converting %%f
-                        "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%%f"
+                        echo Converting "%%~dp0%%f"
+                        "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%%~dp0%%f"
                     )
                     '''
                 }
