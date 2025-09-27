@@ -42,13 +42,8 @@ pipeline {
         stage('Convert TRX to JUnit XML') {
             steps {
                 dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-                    // Ensure TRX_Flat exists
                     bat 'if not exist TRX_Flat mkdir TRX_Flat'
-
-                    // Copy the single TestResults.trx to TRX_Flat
                     bat 'copy /Y TestResults\\TestResults.trx TRX_Flat\\TestResults.trx'
-
-                    // Convert the TRX file to JUnit XML
                     bat '"C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "TRX_Flat\\TestResults.trx"'
                 }
             }
@@ -83,11 +78,9 @@ pipeline {
 
         stage('Copy Angular UI to API') {
             steps {
-                // Delete old wwwroot if it exists
                 bat 'if exist "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" rmdir /s /q "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot"'
-
-                // Copy new Angular build
-                bat 'robocopy "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /NC /NS /NP'
+                // Robocopy with || exit 0 to prevent Jenkins failure on non-zero exit codes
+                bat 'robocopy "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /NC /NS /NP || exit 0'
             }
         }
 
