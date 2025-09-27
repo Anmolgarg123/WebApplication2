@@ -3,22 +3,19 @@ pipeline {
 
     environment {
         DOTNET_PATH = 'C:\\Program Files\\dotnet\\dotnet.exe'
-        WEBAPP_UI_PATH = 'C:\\Users\\samar\\source\\repos\\webapp-ui'
-        BACKEND_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2'
-        WWWROOT_PATH = "${BACKEND_PATH}\\wwwroot"
     }
 
     stages {
-        stage('Clean Workspace') {
+        stage('Checkout Code') {
             steps {
-                echo "Cleaning workspace..."
-                deleteDir()
+                echo "Cloning repository into Jenkins workspace..."
+                checkout scm
             }
         }
 
         stage('Restore & Build Backend') {
             steps {
-                dir(BACKEND_PATH) {
+                dir("WebApplication2/WebApplication2") {
                     echo "Restoring .NET packages..."
                     bat "\"${DOTNET_PATH}\" restore"
 
@@ -30,7 +27,7 @@ pipeline {
 
         stage('Run Unit Tests') {
             steps {
-                dir(BACKEND_PATH) {
+                dir("WebApplication2/WebApplication2.Tests") {
                     echo "Running backend tests..."
                     bat "\"${DOTNET_PATH}\" test --no-build --logger trx"
                 }
@@ -39,7 +36,7 @@ pipeline {
 
         stage('Build Frontend') {
             steps {
-                dir(WEBAPP_UI_PATH) {
+                dir("webapp-ui") {
                     echo "Installing Node packages..."
                     bat "npm install"
 
@@ -51,21 +48,19 @@ pipeline {
 
         stage('Deploy Frontend') {
             steps {
-                echo "Copying Angular build to wwwroot..."
-                // Remove old wwwroot safely
-                bat "rmdir /s /q \"${WWWROOT_PATH}\""
-                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP"
+                echo "Copying Angular build to backend wwwroot..."
+                bat """
+                if exist "WebApplication2/WebApplication2/wwwroot" rmdir /s /q "WebApplication2/WebApplication2/wwwroot"
+                mkdir "WebApplication2/WebApplication2/wwwroot"
+                robocopy "webapp-ui/dist/webapp-ui" "WebApplication2/WebApplication2/wwwroot" /E /NFL /NDL /NJH /NJS /NC /NS /NP
+                """
             }
         }
 
         stage('Run Backend') {
             steps {
-                dir(BACKEND_PATH) {
-                    echo "Stopping any running backend..."
-                    bat "taskkill /IM WebApplication2.exe /F || echo 'No running instance'"
-
+                dir("WebApplication2/WebApplication2") {
                     echo "Starting backend..."
-                    // Starts backend in background without blocking pipeline
                     bat "start \"Backend\" \"${DOTNET_PATH}\" run"
                 }
             }
@@ -74,7 +69,6 @@ pipeline {
         stage('Code Quality - SonarQube') {
             steps {
                 echo "Running SonarQube scan..."
-                // Example, configure your SonarQube server in Jenkins first
                 bat "sonar-scanner"
             }
         }
