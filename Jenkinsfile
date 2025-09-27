@@ -4,9 +4,8 @@ pipeline {
     environment {
         DOTNET_PATH = 'C:\\Program Files\\dotnet\\dotnet.exe'
         WEBAPP_UI_PATH = 'C:\\Users\\samar\\source\\repos\\webapp-ui'
-        SOLUTION_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.sln'
-        TEST_PROJECT_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests'
         BACKEND_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2'
+        SOLUTION_FILE = "${BACKEND_PATH}\\WebApplication2.sln"
         WWWROOT_PATH = "${BACKEND_PATH}\\wwwroot"
     }
 
@@ -20,21 +19,21 @@ pipeline {
 
         stage('Restore & Build Backend') {
             steps {
-                dir("C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2") {
-                    echo "Restoring .NET solution..."
-                    bat "\"${DOTNET_PATH}\" restore WebApplication2.sln"
+                dir(BACKEND_PATH) {
+                    echo "Restoring .NET packages..."
+                    bat "\"${DOTNET_PATH}\" restore \"${SOLUTION_FILE}\""
 
-                    echo "Building backend solution..."
-                    bat "\"${DOTNET_PATH}\" build WebApplication2.sln --no-restore"
+                    echo "Building backend..."
+                    bat "\"${DOTNET_PATH}\" build \"${SOLUTION_FILE}\" --no-restore"
                 }
             }
         }
 
         stage('Run Unit Tests') {
             steps {
-                dir("${TEST_PROJECT_PATH}") {
+                dir(BACKEND_PATH) {
                     echo "Running backend tests..."
-                    bat "\"${DOTNET_PATH}\" test --no-build --logger trx"
+                    bat "\"${DOTNET_PATH}\" test \"${SOLUTION_FILE}\" --no-build --logger trx"
                 }
             }
         }
@@ -53,10 +52,12 @@ pipeline {
 
         stage('Deploy Frontend') {
             steps {
-                echo "Copying Angular build to wwwroot..."
-                // Remove old wwwroot safely (ignore if not exists)
-                bat "if exist \"${WWWROOT_PATH}\" rmdir /s /q \"${WWWROOT_PATH}\""
-                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP"
+                echo "Deploying Angular build to wwwroot..."
+                // Ensure wwwroot exists
+                bat "if not exist \"${WWWROOT_PATH}\" mkdir \"${WWWROOT_PATH}\""
+
+                // Copy Angular build to wwwroot, retry on locks
+                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP /R:2 /W:2"
             }
         }
 
@@ -68,7 +69,7 @@ pipeline {
 
                     echo "Starting backend..."
                     // Starts backend in background without blocking pipeline
-                    bat "start \"Backend\" \"${DOTNET_PATH}\" run"
+                    bat "start \"Backend\" \"${DOTNET_PATH}\" run --project \"${SOLUTION_FILE}\""
                 }
             }
         }
