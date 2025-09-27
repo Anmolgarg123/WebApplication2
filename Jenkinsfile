@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        PATH = "C:\\Program Files\\nodejs;C:\\Users\\samar\\.dotnet\\tools;${env.PATH}"
+        NODE_PATH = '"C:\\Program Files\\nodejs"'
+        PATH = "${NODE_PATH};C:\\Users\\samar\\.dotnet\\tools;${env.PATH}"
     }
 
     stages {
@@ -18,14 +19,14 @@ pipeline {
                 echo "Debugging NodeJS and .NET environment..."
                 bat 'node -v'
                 bat 'npm -v'
-                bat "${DOTNET_PATH} --version"
+                bat '"C:\\Program Files\\dotnet\\dotnet.exe" --version'
             }
         }
 
         stage('Build .NET API') {
             steps {
                 dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
-                    bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
                 }
             }
         }
@@ -33,36 +34,37 @@ pipeline {
         stage('Run .NET Tests') {
             steps {
                 dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-                    bat "${DOTNET_PATH} test WebApplication2.Tests.csproj --logger \"trx;LogFileName=TestResults.trx\" --results-directory TestResults"
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
                 }
             }
         }
 
-       stage('Convert TRX to JUnit') {
-    steps {
-        dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-            // Create a flat folder for all TRX files
-            bat 'if not exist TRX_Flat mkdir TRX_Flat'
-
-            // Copy all TRX files recursively into TRX_Flat
-            bat 'robocopy TestResults TRX_Flat *.trx /S /NFL /NDL /NJH /NJS /NC /NS /NP'
-
-            // Convert each TRX file to JUnit XML
-            bat '''
-            for %%f in (TRX_Flat\\*.trx) do (
-                "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%%f"
-            )
-            '''
+        stage('Convert TRX to JUnit XML') {
+            steps {
+                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
+                    // Make a flat folder for all trx files
+                    bat 'if not exist TRX_Flat mkdir TRX_Flat'
+                    bat 'robocopy TestResults TRX_Flat *.trx /S /NFL /NDL /NJH /NJS /NC /NS /NP'
+                    // Convert the main TRX (the one inside TRX_Flat)
+                    bat '"C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "TRX_Flat\\TestResults.trx"'
+                }
+            }
         }
-    }
-}
-
-
 
         stage('Publish Test Results') {
             steps {
                 dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-                    junit 'TestResults\\TestResults.xml'
+                    junit 'TRX_Flat\\TestResults.xml'
+                }
+            }
+        }
+
+        stage('Code Quality') {
+            steps {
+                echo 'Running code quality checks...'
+                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln'
                 }
             }
         }
@@ -78,16 +80,14 @@ pipeline {
 
         stage('Copy Angular UI to API') {
             steps {
-                bat '''
-                if exist "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" rmdir /s /q "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot"
-                robocopy "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /NC /NS /NP
-                '''
+                bat 'if exist "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" rmdir /s /q "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot"'
+                bat 'robocopy "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /NC /NS /NP'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Add deployment steps here (IIS, Azure, Docker, etc.)'
+                echo 'Add deployment steps here (e.g., IIS, Azure, Docker, etc.)'
             }
         }
     }
