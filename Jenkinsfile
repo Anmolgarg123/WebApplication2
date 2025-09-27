@@ -92,20 +92,7 @@ pipeline {
             }
         }
 
-        stage('Code Quality - SonarQube') {
-            steps {
-                echo "Running SonarQube scan..."
-                
-                // Start the SonarQube scan
-                bat "\"%USERPROFILE%\\.dotnet\\tools\\dotnet-sonarscanner\" begin /k:\"${SONAR_PROJECT_KEY}\" /d:sonar.login=\"${SONAR_TOKEN}\" /d:sonar.host.url=\"${SONAR_HOST_URL}\""
-                
-                // Build backend while scan is active
-                bat "\"${DOTNET_PATH}\" build \"${SOLUTION_FILE}\""
-                
-                // End the SonarQube scan
-                bat "\"%USERPROFILE%\\.dotnet\\tools\\dotnet-sonarscanner\" end /d:sonar.login=\"${SONAR_TOKEN}\""
-            }
-        }
+     
 
         stage('Code Quality - SonarQube') {
     steps {
