@@ -18,16 +18,15 @@ pipeline {
         }
 
         stage('Restore & Build Backend') {
-            steps {
-                dir(BACKEND_PATH) {
-                    echo "Restoring .NET solution..."
-                    bat "\"${DOTNET_PATH}\" restore \"${SOLUTION_FILE}\""
+    steps {
+        echo "Restoring .NET packages..."
+        bat "\"${DOTNET_PATH}\" restore \"C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.sln\""
 
-                    echo "Building backend..."
-                    bat "\"${DOTNET_PATH}\" build \"${SOLUTION_FILE}\" --no-restore"
-                }
-            }
-        }
+        echo "Building backend..."
+        bat "\"${DOTNET_PATH}\" build \"C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.sln\" --no-restore"
+    }
+}
+
 
         stage('Run Unit Tests') {
             steps {
