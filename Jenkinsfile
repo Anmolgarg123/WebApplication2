@@ -92,20 +92,18 @@ pipeline {
             }
         }
 
-     
-
         stage('Code Quality - SonarQube') {
-    steps {
-        echo "Running SonarQube scan..."
-        bat "\"C:\\Users\\samar\\.dotnet\\tools\\dotnet-sonarscanner.exe\" begin /k:\"WebApplication2\" /d:sonar.login=\"squ_5cbdf924e31a93210eb626a9206aba223942c0d5\" /d:sonar.host.url=\"http://localhost:9000\""
-        
-        bat "\"${DOTNET_PATH}\" build \"${SOLUTION_FILE}\""
-        
-        bat "\"C:\\Users\\samar\\.dotnet\\tools\\dotnet-sonarscanner.exe\" end /d:sonar.login=\"squ_5cbdf924e31a93210eb626a9206aba223942c0d5\""
-    }
-}
+            steps {
+                echo "Running SonarQube scan..."
+                bat "\"C:\\Users\\samar\\.dotnet\\tools\\dotnet-sonarscanner.exe\" begin /k:\"${SONAR_PROJECT_KEY}\" /d:sonar.login=\"${SONAR_TOKEN}\" /d:sonar.host.url=\"${SONAR_HOST_URL}\""
 
-       stage('Security Scan') {
+                bat "\"${DOTNET_PATH}\" build \"${SOLUTION_FILE}\""
+
+                bat "\"C:\\Users\\samar\\.dotnet\\tools\\dotnet-sonarscanner.exe\" end /d:sonar.login=\"${SONAR_TOKEN}\""
+            }
+        }
+
+        stage('Security Scan') {
             steps {
                 dir(BACKEND_PATH) {
                     echo "Running security scan for vulnerable dependencies..."
@@ -113,7 +111,7 @@ pipeline {
                 }
             }
         }
-
+    } // closes stages
 
     post {
         always {
@@ -123,4 +121,4 @@ pipeline {
             echo 'Pipeline failed. Check logs.'
         }
     }
-}
+} // closes pipeline
