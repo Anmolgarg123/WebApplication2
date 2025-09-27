@@ -39,12 +39,18 @@ pipeline {
         }
 
         stage('Convert TRX to JUnit') {
-            steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-                    bat '"C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" TestResults\\TestResults.trx'
-                }
-            }
+    steps {
+        dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
+            // Copy any .trx files to a flat folder
+            bat 'mkdir TRX_Flat || exit 0'
+            bat 'copy TestResults\\**\\*.trx TRX_Flat\\'
+
+            // Convert each .trx to JUnit
+            bat 'for %f in (TRX_Flat\\*.trx) do "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%f"'
         }
+    }
+}
+
 
         stage('Publish Test Results') {
             steps {
