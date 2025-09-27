@@ -2,12 +2,13 @@ pipeline {
     agent any
 
     environment {
-        DOTNET_PATH = 'C:\\Program Files\\dotnet\\dotnet.exe'
-        WEBAPP_UI_PATH = 'C:\\Users\\samar\\source\\repos\\webapp-ui'
-        BACKEND_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2'
-        WWWROOT_PATH = "${BACKEND_PATH}\\wwwroot"
-        SOLUTION_FILE = "${BACKEND_PATH}\\WebApplication2.sln"
-    }
+    DOTNET_PATH = 'C:\\Program Files\\dotnet\\dotnet.exe'
+    WEBAPP_UI_PATH = 'C:\\Users\\samar\\source\\repos\\webapp-ui'
+    BACKEND_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2'
+    WWWROOT_PATH = "${BACKEND_PATH}\\WebApplication2\\wwwroot"
+    SOLUTION_FILE = "${BACKEND_PATH}\\WebApplication2.sln"
+}
+
 
     stages {
         stage('Clean Workspace') {
