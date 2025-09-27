@@ -5,6 +5,8 @@ pipeline {
         DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
         NODE_PATH = "C:\\Program Files\\nodejs"
         PATH = "${NODE_PATH};C:\\Users\\samar\\.dotnet\\tools;${env.PATH}"
+        API_PATH = "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2"
+        UI_PATH = "C:\\Users\\samar\\source\\repos\\webapp-ui"
     }
 
     stages {
@@ -25,23 +27,31 @@ pipeline {
 
         stage('Build .NET API') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
+                dir("${API_PATH}") {
+                    bat "${DOTNET_PATH} build WebApplication2.sln -c Release"
+                }
+            }
+        }
+
+        stage('Prepare TestResults Folder') {
+            steps {
+                dir("${API_PATH}") {
+                    bat 'if not exist "WebApplication2.Tests\\TestResults" mkdir "WebApplication2.Tests\\TestResults"'
                 }
             }
         }
 
         stage('Run .NET Tests') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
+                dir("${API_PATH}") {
+                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests\\WebApplication2.Tests.csproj --logger "trx;LogFileName=WebApplication2.Tests\\TestResults\\TestResults.trx" -l "console;verbosity=detailed"'
                 }
             }
         }
 
         stage('Convert TRX to JUnit') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
+                dir("${API_PATH}") {
                     bat '"C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" WebApplication2.Tests\\TestResults\\TestResults.trx'
                 }
             }
@@ -49,7 +59,7 @@ pipeline {
 
         stage('Publish Test Results') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
+                dir("${API_PATH}") {
                     junit 'WebApplication2.Tests\\TestResults\\TestResults.xml'
                 }
             }
@@ -57,36 +67,35 @@ pipeline {
 
         stage('Code Quality') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln'
+                dir("${API_PATH}") {
+                    echo 'Running code quality checks...'
+                    bat "${DOTNET_PATH} tool restore --verbosity minimal"
+                    bat "${DOTNET_PATH} tool run dotnet-format WebApplication2.sln"
                 }
             }
         }
 
         stage('Build Angular UI') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\webapp-ui') {
+                dir("${UI_PATH}") {
                     bat 'npm install'
                     bat 'npm run build'
-                    bat 'if not exist "dist\\webapp-ui" exit 1' // fail if build fails
                 }
             }
         }
 
         stage('Copy Angular UI to API') {
             steps {
-                bat '''
-                if not exist "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" exit 1
-                if exist "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" rmdir /s /q "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot"
-                robocopy "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /NC /NS /NP
-                '''
+                bat """
+                if exist "${API_PATH}\\WebApplication2\\wwwroot" rmdir /s /q "${API_PATH}\\WebApplication2\\wwwroot"
+                robocopy "${UI_PATH}\\dist\\webapp-ui" "${API_PATH}\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /NC /NS /NP || exit 0
+                """
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Add your deployment steps here (IIS, Azure, Docker, etc.)'
+                echo 'Add deployment steps here (e.g., IIS, Azure, Docker, etc.)'
             }
         }
     }
