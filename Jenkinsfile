@@ -80,7 +80,7 @@ pipeline {
                     echo "Stopping any running backend..."
                     bat '''
                     taskkill /IM WebApplication2.exe /F 2>NUL || echo "No running instance"
-                    timeout /t 3 /nobreak
+                     exit /b 0
                     '''
 
                     echo "Starting backend..."
