@@ -86,13 +86,17 @@ pipeline {
     steps {
         dir(BACKEND_PATH) {
             echo "Stopping any running backend..."
-            bat 'taskkill /IM WebApplication2.exe /F 2>NUL || echo "No running instance"'
+            bat '''
+            taskkill /IM WebApplication2.exe /F 2>NUL || echo "No running instance"
+            exit /b 0
+            '''
 
             echo "Starting backend..."
             bat "start \"Backend\" \"${DOTNET_PATH}\" run --project \"${SOLUTION_FILE}\""
         }
     }
 }
+
 
 
         stage('Code Quality - SonarQube') {
