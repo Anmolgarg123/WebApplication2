@@ -55,7 +55,6 @@ pipeline {
         echo "Building and deploying Angular frontend..."
 
         dir(WEBAPP_UI_PATH) {
-            // Ensure node modules installed and build exists
             bat "npm install"
             bat "npm run build"
         }
@@ -72,6 +71,7 @@ pipeline {
         bat """
         if exist "${WEBAPP_UI_PATH}\\dist\\webapp-ui" (
             robocopy "${WEBAPP_UI_PATH}\\dist\\webapp-ui" "${WWWROOT_PATH}" /E /MT:8 /IS
+            if %ERRORLEVEL% LSS 8 exit 0
         ) else (
             echo "ERROR: Angular dist folder does not exist!"
             exit /b 1
