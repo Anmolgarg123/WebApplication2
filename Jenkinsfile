@@ -105,13 +105,15 @@ pipeline {
     }
 }
 
-
-        stage('Monitoring (Placeholder)') {
+        stage('Security Scan') {
             steps {
-                echo "Monitoring stage configured (placeholder for HD)."
+                dir(BACKEND_PATH) {
+                    echo "Running security scan for vulnerable dependencies..."
+                    bat "\"${DOTNET_PATH}\" list package --vulnerable"
+                }
             }
         }
-    }
+
 
     post {
         always {
