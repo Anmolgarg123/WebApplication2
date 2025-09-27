@@ -7,6 +7,9 @@ pipeline {
         BACKEND_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2'
         WWWROOT_PATH = "${BACKEND_PATH}\\WebApplication2\\wwwroot"
         SOLUTION_FILE = "${BACKEND_PATH}\\WebApplication2.sln"
+        SONAR_TOKEN = 'squ_5cbdf924e31a93210eb626a9206aba223942c0d5'
+        SONAR_PROJECT_KEY = 'WebApplication2'
+        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     stages {
@@ -80,7 +83,7 @@ pipeline {
                     echo "Stopping any running backend..."
                     bat '''
                     taskkill /IM WebApplication2.exe /F 2>NUL || echo "No running instance"
-                     exit /b 0
+                    exit /b 0
                     '''
 
                     echo "Starting backend..."
@@ -89,9 +92,18 @@ pipeline {
             }
         }
 
-         stage('Code Quality - SonarQube (Skipped)') {
+        stage('Code Quality - SonarQube') {
             steps {
-                echo "Skipping SonarQube scan for this submission."
+                echo "Running SonarQube scan..."
+                
+                // Start the SonarQube scan
+                bat "\"%USERPROFILE%\\.dotnet\\tools\\dotnet-sonarscanner\" begin /k:\"${SONAR_PROJECT_KEY}\" /d:sonar.login=\"${SONAR_TOKEN}\" /d:sonar.host.url=\"${SONAR_HOST_URL}\""
+                
+                // Build backend while scan is active
+                bat "\"${DOTNET_PATH}\" build \"${SOLUTION_FILE}\""
+                
+                // End the SonarQube scan
+                bat "\"%USERPROFILE%\\.dotnet\\tools\\dotnet-sonarscanner\" end /d:sonar.login=\"${SONAR_TOKEN}\""
             }
         }
 
