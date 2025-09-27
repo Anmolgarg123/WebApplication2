@@ -29,10 +29,8 @@ pipeline {
 
         stage('Run Unit Tests') {
             steps {
-                dir(BACKEND_PATH) {
-                    echo "Running backend tests..."
-                    bat "\"${DOTNET_PATH}\" test \"${SOLUTION_FILE}\" --no-build --logger trx"
-                }
+                echo "Running backend tests..."
+                bat "\"${DOTNET_PATH}\" test \"${SOLUTION_FILE}\" --no-build --logger trx"
             }
         }
 
@@ -52,13 +50,10 @@ pipeline {
             steps {
                 echo "Copying Angular build to wwwroot..."
                 // Ensure wwwroot exists
-                bat "mkdir \"${WWWROOT_PATH}\" || echo 'wwwroot exists'"
+                bat "if not exist \"${WWWROOT_PATH}\" mkdir \"${WWWROOT_PATH}\""
 
-                // Clean old files
-                bat "rmdir /s /q \"${WWWROOT_PATH}\""
-
-                // Copy new frontend build
-                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP"
+                // Mirror Angular build into wwwroot
+                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP"
             }
         }
 
