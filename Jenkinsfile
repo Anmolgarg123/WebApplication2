@@ -2,104 +2,90 @@ pipeline {
     agent any
 
     environment {
-        DOTNET_PATH = '"C:\\Program Files\\dotnet\\dotnet.exe"'
-        NODE_PATH = '"C:\\Program Files\\nodejs"'
-        PATH = "${NODE_PATH};C:\\Users\\samar\\.dotnet\\tools;${env.PATH}"
+        DOTNET_PATH = 'C:\\Program Files\\dotnet\\dotnet.exe'
+        WEBAPP_UI_PATH = 'C:\\Users\\samar\\source\\repos\\webapp-ui'
+        BACKEND_PATH = 'C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2'
+        WWWROOT_PATH = "${BACKEND_PATH}\\wwwroot"
     }
 
     stages {
-        stage('Checkout SCM') {
+        stage('Clean Workspace') {
             steps {
-                checkout scm
+                echo "Cleaning workspace..."
+                deleteDir()
             }
         }
 
-        stage('Debug Environment') {
+        stage('Restore & Build Backend') {
             steps {
-                echo "Debugging NodeJS and .NET environment..."
-                bat 'node -v'
-                bat 'npm -v'
-                bat '"C:\\Program Files\\dotnet\\dotnet.exe" --version'
-            }
-        }
+                dir(BACKEND_PATH) {
+                    echo "Restoring .NET packages..."
+                    bat "\"${DOTNET_PATH}\" restore"
 
-        stage('Build .NET API') {
-            steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" build WebApplication2.sln -c Release'
+                    echo "Building backend..."
+                    bat "\"${DOTNET_PATH}\" build --no-restore"
                 }
             }
         }
 
-        stage('Run .NET Tests') {
+        stage('Run Unit Tests') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" test WebApplication2.Tests.csproj --logger "trx;LogFileName=TestResults.trx" -l "console;verbosity=detailed"'
+                dir(BACKEND_PATH) {
+                    echo "Running backend tests..."
+                    bat "\"${DOTNET_PATH}\" test --no-build --logger trx"
                 }
             }
         }
 
-        stage('Convert TRX to JUnit XML') {
+        stage('Build Frontend') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-                    bat 'if not exist TRX_Flat mkdir TRX_Flat'
-                    bat 'copy /Y TestResults\\TestResults.trx TRX_Flat\\TestResults.trx'
-                    bat '"C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "TRX_Flat\\TestResults.trx"'
+                dir(WEBAPP_UI_PATH) {
+                    echo "Installing Node packages..."
+                    bat "npm install"
+
+                    echo "Building Angular project..."
+                    bat "npm run build"
                 }
             }
         }
 
-        stage('Publish Test Results') {
+        stage('Deploy Frontend') {
             steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-                    junit 'TRX_Flat\\*.xml'
+                echo "Copying Angular build to wwwroot..."
+                // Remove old wwwroot safely
+                bat "rmdir /s /q \"${WWWROOT_PATH}\""
+                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP"
+            }
+        }
+
+        stage('Run Backend') {
+            steps {
+                dir(BACKEND_PATH) {
+                    echo "Stopping any running backend..."
+                    bat "taskkill /IM WebApplication2.exe /F || echo 'No running instance'"
+
+                    echo "Starting backend..."
+                    // Starts backend in background without blocking pipeline
+                    bat "start \"Backend\" \"${DOTNET_PATH}\" run"
                 }
             }
         }
 
-        stage('Code Quality') {
+        stage('Code Quality - SonarQube') {
             steps {
-                echo 'Running code quality checks...'
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2') {
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool restore --verbosity minimal'
-                    bat '"C:\\Program Files\\dotnet\\dotnet.exe" tool run dotnet-format WebApplication2.sln'
-                }
-            }
-        }
-
-        stage('Build Angular UI') {
-            steps {
-                dir('C:\\Users\\samar\\source\\repos\\webapp-ui') {
-                    bat 'npm install'
-                    bat 'npm run build'
-                }
-            }
-        }
-
-        stage('Copy Angular UI to API') {
-            steps {
-                bat 'if exist "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" rmdir /s /q "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot"'
-                // Robocopy with || exit 0 to prevent Jenkins failure on non-zero exit codes
-                bat 'robocopy "C:\\Users\\samar\\source\\repos\\webapp-ui\\dist\\webapp-ui" "C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2\\wwwroot" /E /NFL /NDL /NJH /NJS /NC /NS /NP || exit 0'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Add deployment steps here (e.g., IIS, Azure, Docker, etc.)'
+                echo "Running SonarQube scan..."
+                // Example, configure your SonarQube server in Jenkins first
+                bat "sonar-scanner"
             }
         }
     }
 
     post {
         always {
-            echo 'Pipeline finished!'
-        }
-        success {
-            echo 'Pipeline completed successfully!'
+            echo 'Pipeline finished.'
         }
         failure {
-            echo 'Pipeline failed. Check logs for errors.'
+            echo 'Pipeline failed. Check logs.'
         }
     }
 }
