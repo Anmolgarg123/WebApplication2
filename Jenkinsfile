@@ -51,18 +51,21 @@ pipeline {
         }
 
         stage('Deploy Frontend') {
-            steps {
-                echo "Copying Angular build to wwwroot..."
-                // Ensure wwwroot exists
-                bat """
-                if not exist "${WWWROOT_PATH}" (
-                    mkdir "${WWWROOT_PATH}"
-                )
-                """
-                // Copy Angular build safely
-                bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP /MT:8"
-            }
-        }
+    steps {
+        echo "Preparing wwwroot..."
+        // Check if wwwroot exists, create if missing
+        bat """
+        if exist "${WWWROOT_PATH}" (
+            rmdir /s /q "${WWWROOT_PATH}"
+        )
+        mkdir "${WWWROOT_PATH}"
+        """
+
+        echo "Copying Angular build to wwwroot..."
+        bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP /MT:8"
+    }
+}
+
 
         stage('Run Backend') {
             steps {
