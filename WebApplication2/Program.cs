@@ -33,11 +33,18 @@ if (app.Environment.IsDevelopment())
 // Enable CORS
 app.UseCors("AllowAngularApp");
 
-app.UseHttpsRedirection();
+// Serve Angular files from wwwroot
+app.UseDefaultFiles();   // serves index.html by default
+app.UseStaticFiles();    // serves JS/CSS/assets
 
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
+// Map API endpoints
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// Optional: fallback to index.html for Angular routes
+app.MapFallbackToFile("index.html");
 
 app.Run();
