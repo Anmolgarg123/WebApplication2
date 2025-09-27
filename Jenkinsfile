@@ -40,16 +40,20 @@ pipeline {
         }
 
         stage('Convert TRX to JUnit XML') {
-            steps {
-                dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
-                    // Make a flat folder for all trx files
-                    bat 'if not exist TRX_Flat mkdir TRX_Flat'
-                    bat 'robocopy TestResults TRX_Flat *.trx /S /NFL /NDL /NJH /NJS /NC /NS /NP'
-                    // Convert the main TRX (the one inside TRX_Flat)
-                    bat '"C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "TRX_Flat\\TestResults.trx"'
-                }
-            }
+    steps {
+        dir('C:\\Users\\samar\\source\\repos\\Anmolgarg123\\WebApplication2\\WebApplication2.Tests') {
+            bat 'if not exist TRX_Flat mkdir TRX_Flat'
+            bat 'robocopy "TestResults" "TRX_Flat" *.trx /S /NFL /NDL /NJH /NJS /NC /NS /NP || exit 0'
+            bat '''
+            for %%f in (TRX_Flat\\*.trx) do (
+                echo Converting %%f
+                "C:\\Users\\samar\\.dotnet\\tools\\trx2junit.exe" "%%f"
+            )
+            '''
         }
+    }
+}
+
 
         stage('Publish Test Results') {
             steps {
