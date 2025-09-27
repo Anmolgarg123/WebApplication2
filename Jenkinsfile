@@ -52,8 +52,15 @@ pipeline {
 
         stage('Deploy Frontend') {
     steps {
+        echo "Building and deploying Angular frontend..."
+
+        dir(WEBAPP_UI_PATH) {
+            // Ensure node modules installed and build exists
+            bat "npm install"
+            bat "npm run build"
+        }
+
         echo "Preparing wwwroot..."
-        // Check if wwwroot exists, create if missing
         bat """
         if exist "${WWWROOT_PATH}" (
             rmdir /s /q "${WWWROOT_PATH}"
@@ -62,9 +69,17 @@ pipeline {
         """
 
         echo "Copying Angular build to wwwroot..."
-        bat "robocopy \"${WEBAPP_UI_PATH}\\dist\\webapp-ui\" \"${WWWROOT_PATH}\" /E /NFL /NDL /NJH /NJS /NC /NS /NP /MT:8"
+        bat """
+        if exist "${WEBAPP_UI_PATH}\\dist\\webapp-ui" (
+            robocopy "${WEBAPP_UI_PATH}\\dist\\webapp-ui" "${WWWROOT_PATH}" /E /MT:8 /IS
+        ) else (
+            echo "ERROR: Angular dist folder does not exist!"
+            exit /b 1
+        )
+        """
     }
 }
+
 
 
         stage('Run Backend') {
